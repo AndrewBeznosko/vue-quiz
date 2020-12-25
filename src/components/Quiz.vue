@@ -23,7 +23,7 @@
               :class="{ 'disabled' : currentQuestion.is_disabled }"
             >
               <input 
-                @change="questions[current_index].answer = answer.value"
+                @change="onAnswer(answer)"
                 :value="answer.value"
                 :name="`answerRadio-${currentQuestion.key}`" 
                 :id="`answer-${current_index}-${i}`" 
@@ -80,16 +80,24 @@
       isLastQuestion() {
         return (this.questions.length-1 == this.current_index) ? true : false
       },
-      currentQuestion() {
-        return this.transformedQuestions[this.current_index]
+      currentQuestion: {
+        get() {
+          return this.transformedQuestions[this.current_index]
+        },
+        set(ques) {
+          this.questions[this.current_index] = ques
+        }
       },
       transformedQuestions: {
         get() {
           return this.questions.map((el) => {
-            Object.assign(el, {
-              answer: undefined,
-              is_disabled: false
-            });
+            // Object.assign(el, {
+            //   answer: undefined,
+            //   is_disabled: false
+            // });
+
+            if(!el['answer']) el['answer'] = undefined
+            if(!el['is_disabled']) el['is_disabled'] = false
 
             return el
           })
@@ -106,6 +114,7 @@
         if(this.questions[this.current_index].answer) this.toNextStep()
       },
       toNextStep() {
+        this.checkSubQuestionExisting()
         this.currentQuestion.is_disabled = true
         this.current_index++
         this.was_validated = false,
@@ -119,6 +128,18 @@
         let answered = 0
         this.questions.forEach(element => { if(element.answer) answered++ });
         return Math.round((answered*100)/this.totalQuestions)
+      },
+      onAnswer(answer) {
+        this.questions[this.current_index].answer = answer.value
+      },
+      checkSubQuestionExisting() {
+        let answer = this.currentQuestion.answers.find(el => el.value == this.currentQuestion.answer),
+            next_question_index = this.current_index + 1
+
+        if(answer && answer['sub']) {
+          this.questions.splice(next_question_index, 0, answer.sub)
+          delete answer.sub
+        }
       }
     },
     mounted() {
