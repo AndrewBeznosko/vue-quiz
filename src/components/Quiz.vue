@@ -1,59 +1,100 @@
 <template>
   <div class="vue-quiz">
-    <form 
-      @submit.prevent
-      v-if="currentQuestion"
-      class="card bg-secondary"
-      :class="{ 'was-validated' : was_validated }"
-    >
-      <div class="card-header position-relative border-0">
-        <h2 class="fw-bold mb-1">{{ currentQuestion.title }}</h2>
-        <div class="progress position-absolute w-100 start-0 bottom-0 rounded-0" style="height: 2px;">
-          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" :style="`width: ${progress()}%`"></div>
-        </div>
-      </div>
-      <div class="card-body py-3" style="min-height: 250px;">
-        <div class="card">
-          <div class="list-group list-group-flush text-dark">
-
-            <label
-              v-for="(answer, i) in currentQuestion.answers"
-              :key="`answer-${current_index}-${i}`"
-              class="form-check list-group-item ps-5"
-              :class="{ 'disabled' : currentQuestion.is_disabled }"
-            >
-              <input 
-                @change="onAnswer(answer)"
-                :value="answer.value"
-                :name="`answerRadio-${currentQuestion.key}`" 
-                :id="`answer-${current_index}-${i}`" 
-                v-bind="{ 'checked' : currentQuestion.answer == answer.value }"
-                class="form-check-input" 
-                type="radio" 
-                required
-              >
-              <span class="form-check-label fw-bold">{{ answer.title }}</span>
-            </label>
-
+    <template v-if="!show_results">
+      <form 
+        @submit.prevent
+        v-if="currentQuestion"
+        class="card bg-secondary"
+        :class="{ 'was-validated' : was_validated }"
+      >
+        <div class="card-header position-relative border-0">
+          <h2 class="fw-bold mb-1">{{ currentQuestion.title }}</h2>
+          <div class="progress position-absolute w-100 start-0 bottom-0 rounded-0" style="height: 2px;">
+            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" :style="`width: ${progress()}%`"></div>
           </div>
         </div>
-      </div>
-      <div class="card-footer d-flex justify-content-between">
-        <button 
-          @click="toPreventStep()" 
-          type="button" 
-          class="btn btn-outline-light"
-          v-bind="{ 'disabled' : current_index <= 0 }"
-        >
-          Prevent
-        </button>
-        <button 
-          @click.prevent="!isLastQuestion ? validate($event) : showResults()" 
-          type="button" 
-          class="btn btn-primary ml-auto fw-bold"
-        >{{ isLastQuestion ? 'Finish' : 'Step' }}</button>
-      </div>
-    </form>
+        <div class="card-body py-3" style="min-height: 250px;">
+          <div class="card">
+            <div class="list-group list-group-flush text-dark">
+
+              <label
+                v-for="(answer, i) in currentQuestion.answers"
+                :key="`answer-${current_index}-${i}`"
+                class="form-check list-group-item ps-5"
+                :class="{ 'disabled' : currentQuestion.is_disabled }"
+              >
+                <input 
+                  @change="onAnswer(answer)"
+                  :value="answer.value"
+                  :name="`answerRadio-${currentQuestion.key}`" 
+                  :id="`answer-${current_index}-${i}`" 
+                  v-bind="{ 'checked' : currentQuestion.answer == answer.value }"
+                  class="form-check-input" 
+                  type="radio" 
+                  required
+                >
+                <span class="form-check-label fw-bold">{{ answer.title }}</span>
+              </label>
+
+            </div>
+          </div>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+          <button 
+            @click="toPreventStep()" 
+            type="button" 
+            class="btn btn-outline-light"
+            v-bind="{ 'disabled' : current_index <= 0 }"
+          >
+            Prevent
+          </button>
+          <button 
+            @click.prevent="validate($event)" 
+            type="button" 
+            class="btn btn-primary ml-auto fw-bold"
+          >{{ isLastQuestion ? 'Finish' : 'Step' }}</button>
+        </div>
+      </form>
+    </template>
+    <template v-else>
+      <form 
+        @submit.prevent
+        v-for="question in questions"
+        :key="question.key"
+        class="card bg-secondary mb-3"
+        :class="{ 'was-validated' : was_validated }"
+      >
+        <div class="card-header position-relative border-0">
+          <h2 class="fw-bold mb-1">{{ question.title }}</h2>
+        </div>
+        <div class="card-body py-3">
+          <div class="card">
+            <div class="list-group list-group-flush text-dark">
+
+              <label
+                v-for="(answer, i) in question.answers"
+                :key="`answer-${current_index}-${i}`"
+                class="form-check list-group-item ps-5"
+                :class="{ 'disabled' : question.is_disabled }"
+              >
+                <input 
+                  @change="onAnswer(answer)"
+                  :value="answer.value"
+                  :name="`answerRadio-${question.key}`" 
+                  :id="`answer-${current_index}-${i}`" 
+                  v-bind="{ 'checked' : question.answer == answer.value }"
+                  class="form-check-input" 
+                  type="radio" 
+                  required
+                >
+                <span class="form-check-label fw-bold">{{ answer.title }}</span>
+              </label>
+
+            </div>
+          </div>
+        </div>
+      </form>
+    </template>
   </div>
 </template>
 
@@ -69,6 +110,7 @@
     data() {
       return {
         was_validated: false,
+        show_results: false,
         questions: [],
         current_index: 0
       }
@@ -79,6 +121,16 @@
       },  
       isLastQuestion() {
         return (this.questions.length-1 == this.current_index) ? true : false
+      },
+      nextQuestionIndex() {
+        return this.isLastQuestion ? this.current_index : this.current_index + 1
+      },
+      answersArr() {
+        let arr = []
+        this.questions.forEach(el => {
+          if(el.answer) arr.push(el.answer)
+        })
+        return arr
       },
       currentQuestion: {
         get() {
@@ -113,12 +165,18 @@
         this.was_validated = true
         if(this.questions[this.current_index].answer) this.toNextStep()
       },
-      toNextStep() {
-        this.checkSubQuestionExisting()
+      async toNextStep() {
+        await this.checkSubQuestionExisting()
+        await this.checkQuestionShowIf()
         this.currentQuestion.is_disabled = true
-        this.current_index++
         this.was_validated = false,
         this.progress()
+
+        if(this.isLastQuestion) {
+          this.showResults()
+        } else {
+          this.current_index++
+        }
       },
       toPreventStep() {
         this.current_index--
@@ -133,13 +191,29 @@
         this.questions[this.current_index].answer = answer.value
       },
       checkSubQuestionExisting() {
-        let answer = this.currentQuestion.answers.find(el => el.value == this.currentQuestion.answer),
-            next_question_index = this.current_index + 1
-
-        if(answer && answer['sub']) {
-          this.questions.splice(next_question_index, 0, answer.sub)
-          delete answer.sub
-        }
+        return new Promise((resolve, reject) => {
+          let answer = this.currentQuestion.answers.find(el => el.value == this.currentQuestion.answer)
+          if(answer && answer['sub']) {
+            this.questions.splice(this.nextQuestionIndex, 0, answer.sub)
+            delete answer.sub
+          }
+          resolve()
+        })
+      },
+      checkQuestionShowIf() {
+        return new Promise((resolve, reject) => {
+          let show_if = this.questions[this.nextQuestionIndex].show_if
+          if(show_if && !this.mustContainsAllValues(this.answersArr, show_if) ) {
+            this.questions.splice(this.nextQuestionIndex, 1)
+          }
+          resolve()
+        })
+      },
+      mustContainsAllValues(arr1, arr2) {
+        return arr2.every(el => arr1.includes(el))
+      },
+      showResults() {
+        this.show_results = true
       }
     },
     mounted() {
@@ -147,7 +221,3 @@
     }
   }
 </script>
-
-<style scoped lang="scss">
-
-</style>
