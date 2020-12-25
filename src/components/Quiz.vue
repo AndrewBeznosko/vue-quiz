@@ -9,7 +9,7 @@
       <div class="card-header position-relative border-0">
         <h2 class="fw-bold mb-1">{{ currentQuestion.title }}</h2>
         <div class="progress position-absolute w-100 start-0 bottom-0 rounded-0" style="height: 2px;">
-          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" style="width: 0%"></div>
+          <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" :style="`width: ${progress()}%`"></div>
         </div>
       </div>
       <div class="card-body py-3" style="min-height: 250px;">
@@ -20,6 +20,7 @@
               v-for="(answer, i) in currentQuestion.answers"
               :key="`answer-${current_index}-${i}`"
               class="form-check list-group-item ps-5"
+              :class="{ 'disabled' : currentQuestion.is_disabled }"
             >
               <input 
                 @change="questions[current_index].answer = answer.value"
@@ -80,12 +81,15 @@
         return (this.questions.length-1 == this.current_index) ? true : false
       },
       currentQuestion() {
-        return this.filteredQuestions[this.current_index]
+        return this.transformedQuestions[this.current_index]
       },
-      filteredQuestions: {
+      transformedQuestions: {
         get() {
           return this.questions.map((el) => {
-            if(!el['answer']) el['answer'] = ''
+            Object.assign(el, {
+              answer: undefined,
+              is_disabled: false
+            });
 
             return el
           })
@@ -93,7 +97,7 @@
         set(questions) {
           this.questions = questions
         }
-      }
+      },
     },
     methods: {
       validate(e) {
@@ -102,12 +106,19 @@
         if(this.questions[this.current_index].answer) this.toNextStep()
       },
       toNextStep() {
+        this.currentQuestion.is_disabled = true
         this.current_index++
-        this.was_validated = false
+        this.was_validated = false,
+        this.progress()
       },
       toPreventStep() {
         this.current_index--
         this.was_validated = false
+      },
+      progress() {
+        let answered = 0
+        this.questions.forEach(element => { if(element.answer) answered++ });
+        return Math.round((answered*100)/this.totalQuestions)
       }
     },
     mounted() {
