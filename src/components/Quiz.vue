@@ -11,7 +11,7 @@
           <h2 class="fw-bold mb-1">{{ currentQuestion.title }}</h2>
           
           <ProgressBar
-            :progress="progress"
+            :progress="progress()"
             mod="progress-bar-striped progress-bar-animated bg-success"
             class="position-absolute w-100 start-0 bottom-0 rounded-0"
           />
@@ -144,33 +144,11 @@ export default {
     },
     currentQuestion: {
       get() {
-        return this.transformedQuestions[this.current_index]
+        return this.questions[this.current_index]
       },
       set(ques) {
         this.questions[this.current_index] = ques
       }
-    },
-    transformedQuestions: {
-      get() {
-        return this.questions.map((el) => {
-          // Object.assign(el, {
-          //   answer: undefined,
-          //   is_disabled: false
-          // });
-
-          if(!el['answer']) el['answer'] = undefined
-          if(!el['is_disabled']) el['is_disabled'] = false
-
-          return el
-        })
-      },
-      set(questions) {
-        this.questions = questions
-      }
-    },
-    progress() {
-      let answered = this.questions.filter(el => el.answer).length;
-      return Math.round((answered*100)/this.totalQuestions)
     },
   },
   methods: {
@@ -184,6 +162,7 @@ export default {
       await this.checkQuestionShowIf()
       this.currentQuestion.is_disabled = true
       this.was_validated = false
+      this.progress()
 
       if(this.isLastQuestion) {
         this.showResults()
@@ -219,7 +198,11 @@ export default {
     },
     showResults() {
       this.show_results = true
-    }
+    },
+    progress() {
+      let answered = this.questions.filter(el => el.answer).length
+      return Math.round((answered*100)/this.totalQuestions)
+    },
   },
   mounted() {
     this.questions = this.questionsProp
