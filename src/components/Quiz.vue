@@ -99,125 +99,124 @@
 </template>
 
 <script>  
-  export default {
-    name: 'Quiz',
-    props: {
-      questionsProp: {
-        type: Array, 
-        default: [], 
-      }
-    },
-    data() {
-      return {
-        was_validated: false,
-        show_results: false,
-        questions: [],
-        current_index: 0
-      }
-    },
-    computed: {
-      totalQuestions() {
-        return this.questions.length
-      },  
-      isLastQuestion() {
-        return (this.questions.length-1 == this.current_index) ? true : false
-      },
-      nextQuestionIndex() {
-        return this.isLastQuestion ? this.current_index : this.current_index + 1
-      },
-      answersArr() {
-        let arr = []
-        this.questions.forEach(el => {
-          if(el.answer) arr.push(el.answer)
-        })
-        return arr
-      },
-      currentQuestion: {
-        get() {
-          return this.transformedQuestions[this.current_index]
-        },
-        set(ques) {
-          this.questions[this.current_index] = ques
-        }
-      },
-      transformedQuestions: {
-        get() {
-          return this.questions.map((el) => {
-            // Object.assign(el, {
-            //   answer: undefined,
-            //   is_disabled: false
-            // });
+import Utils from '@/modules/Utils'
 
-            if(!el['answer']) el['answer'] = undefined
-            if(!el['is_disabled']) el['is_disabled'] = false
-
-            return el
-          })
-        },
-        set(questions) {
-          this.questions = questions
-        }
-      },
-    },
-    methods: {
-      validate(e) {
-        e.target.closest('form').requestSubmit()
-        this.was_validated = true
-        if(this.questions[this.current_index].answer) this.toNextStep()
-      },
-      async toNextStep() {
-        await this.checkSubQuestionExisting()
-        await this.checkQuestionShowIf()
-        this.currentQuestion.is_disabled = true
-        this.was_validated = false,
-        this.progress()
-
-        if(this.isLastQuestion) {
-          this.showResults()
-        } else {
-          this.current_index++
-        }
-      },
-      toPreventStep() {
-        this.current_index--
-        this.was_validated = false
-      },
-      progress() {
-        let answered = 0
-        this.questions.forEach(element => { if(element.answer) answered++ });
-        return Math.round((answered*100)/this.totalQuestions)
-      },
-      onAnswer(answer) {
-        this.questions[this.current_index].answer = answer.value
-      },
-      checkSubQuestionExisting() {
-        return new Promise((resolve, reject) => {
-          let answer = this.currentQuestion.answers.find(el => el.value == this.currentQuestion.answer)
-          if(answer && answer['sub']) {
-            this.questions.splice(this.nextQuestionIndex, 0, answer.sub)
-            delete answer.sub
-          }
-          resolve()
-        })
-      },
-      checkQuestionShowIf() {
-        return new Promise((resolve, reject) => {
-          let show_if = this.questions[this.nextQuestionIndex].show_if
-          if(show_if && !this.mustContainsAllValues(this.answersArr, show_if) ) {
-            this.questions.splice(this.nextQuestionIndex, 1)
-          }
-          resolve()
-        })
-      },
-      mustContainsAllValues(arr1, arr2) {
-        return arr2.every(el => arr1.includes(el))
-      },
-      showResults() {
-        this.show_results = true
-      }
-    },
-    mounted() {
-      this.questions = this.questionsProp
+export default {
+  name: 'Quiz',
+  props: {
+    questionsProp: {
+      type: Array, 
+      default: [], 
     }
+  },
+  data() {
+    return {
+      was_validated: false,
+      show_results: false,
+      questions: [],
+      current_index: 0
+    }
+  },
+  computed: {
+    totalQuestions() {
+      return this.questions.length
+    },  
+    isLastQuestion() {
+      return (this.questions.length-1 == this.current_index) ? true : false
+    },
+    nextQuestionIndex() {
+      return this.isLastQuestion ? this.current_index : this.current_index + 1
+    },
+    answersArr() {
+      let arr = []
+      this.questions.forEach(el => {
+        if(el.answer) arr.push(el.answer)
+      })
+      return arr
+    },
+    currentQuestion: {
+      get() {
+        return this.transformedQuestions[this.current_index]
+      },
+      set(ques) {
+        this.questions[this.current_index] = ques
+      }
+    },
+    transformedQuestions: {
+      get() {
+        return this.questions.map((el) => {
+          // Object.assign(el, {
+          //   answer: undefined,
+          //   is_disabled: false
+          // });
+
+          if(!el['answer']) el['answer'] = undefined
+          if(!el['is_disabled']) el['is_disabled'] = false
+
+          return el
+        })
+      },
+      set(questions) {
+        this.questions = questions
+      }
+    },
+  },
+  methods: {
+    validate(e) {
+      e.target.closest('form').requestSubmit()
+      this.was_validated = true
+      if(this.questions[this.current_index].answer) this.toNextStep()
+    },
+    async toNextStep() {
+      await this.checkSubQuestionExisting()
+      await this.checkQuestionShowIf()
+      this.currentQuestion.is_disabled = true
+      this.was_validated = false,
+      this.progress()
+
+      if(this.isLastQuestion) {
+        this.showResults()
+      } else {
+        this.current_index++
+      }
+    },
+    toPreventStep() {
+      this.current_index--
+      this.was_validated = false
+    },
+    progress() {
+      let answered = 0
+      this.questions.forEach(element => { if(element.answer) answered++ });
+      return Math.round((answered*100)/this.totalQuestions)
+    },
+    onAnswer(answer) {
+      this.questions[this.current_index].answer = answer.value
+    },
+    checkSubQuestionExisting() {
+      return new Promise((resolve, reject) => {
+        let answer = this.currentQuestion.answers.find(el => el.value == this.currentQuestion.answer)
+        if(answer && answer['sub']) {
+          this.questions.splice(this.nextQuestionIndex, 0, answer.sub)
+          delete answer.sub
+        }
+        resolve()
+      })
+    },
+    checkQuestionShowIf() {
+      return new Promise((resolve, reject) => {
+        let show_if = this.questions[this.nextQuestionIndex].show_if
+        if(show_if && !Utils.mustContainsAllValues(this.answersArr, show_if) ) {
+          this.questions.splice(this.nextQuestionIndex, 1)
+        }
+        resolve()
+      })
+    },
+    showResults() {
+      this.show_results = true
+    }
+  },
+  mounted() {
+    this.questions = this.questionsProp
   }
+}
 </script>
