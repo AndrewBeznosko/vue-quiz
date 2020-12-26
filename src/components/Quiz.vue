@@ -9,9 +9,12 @@
       >
         <div class="card-header position-relative border-0">
           <h2 class="fw-bold mb-1">{{ currentQuestion.title }}</h2>
-          <div class="progress position-absolute w-100 start-0 bottom-0 rounded-0" style="height: 2px;">
-            <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" :style="`width: ${progress()}%`"></div>
-          </div>
+          
+          <ProgressBar
+            :progress="progress"
+            class="position-absolute w-100 start-0 bottom-0 rounded-0"
+          />
+
         </div>
         <div class="card-body py-3" style="min-height: 250px;">
           <div class="card">
@@ -100,9 +103,13 @@
 
 <script>  
 import Utils from '@/modules/Utils'
+import ProgressBar from '@/components/ProgressBar'
 
 export default {
   name: 'Quiz',
+  components: {
+    ProgressBar
+  },
   props: {
     questionsProp: {
       type: Array, 
@@ -160,6 +167,10 @@ export default {
         this.questions = questions
       }
     },
+    progress() {
+      let answered = this.questions.filter(el => el.answer).length;
+      return Math.round((answered*100)/this.totalQuestions)
+    },
   },
   methods: {
     validate(e) {
@@ -171,8 +182,7 @@ export default {
       await this.checkSubQuestionExisting()
       await this.checkQuestionShowIf()
       this.currentQuestion.is_disabled = true
-      this.was_validated = false,
-      this.progress()
+      this.was_validated = false
 
       if(this.isLastQuestion) {
         this.showResults()
@@ -183,11 +193,6 @@ export default {
     toPreventStep() {
       this.current_index--
       this.was_validated = false
-    },
-    progress() {
-      let answered = 0
-      this.questions.forEach(element => { if(element.answer) answered++ });
-      return Math.round((answered*100)/this.totalQuestions)
     },
     onAnswer(answer) {
       this.questions[this.current_index].answer = answer.value
