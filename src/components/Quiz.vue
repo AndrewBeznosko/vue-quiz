@@ -9,7 +9,7 @@
       >
         <template slot="progress">
           <ProgressBar
-            :progress="progress()"
+            :progress="progress"
             mod="progress-bar-striped progress-bar-animated bg-success"
             class="w-100 position-absolute start-0 bottom-0 rounded-0"
           />
@@ -23,6 +23,14 @@
               v-bind="{ 'disabled' : current_index <= 0 }"
             >
               Prevent
+            </button>
+            <button 
+              @click="reset()" 
+              type="button" 
+              class="btn ms-3 me-auto"
+              v-bind="{ 'disabled' : current_index <= 0 }"
+            >
+              <img src="@/assets/images/redo.svg" alt="redo" width="15"/>
             </button>
             <button 
               @click.prevent="validate($event)" 
@@ -70,7 +78,8 @@ export default {
       was_validated: false,
       show_results: false,
       questions: [],
-      current_index: 0
+      current_index: 0,
+      progress: 0
     }
   },
   computed: {
@@ -103,14 +112,14 @@ export default {
     validate(e) {
       e.target.closest('form').requestSubmit()
       this.was_validated = true
-      if(this.questions[this.current_index].answer) this.toNextStep()
+      if(this.currentQuestion.answer) this.toNextStep()
     },
     async toNextStep() {
       await this.checkSubQuestionExisting()
       await this.checkQuestionShowIf()
       this.currentQuestion.is_disabled = true
       this.was_validated = false
-      this.progress()
+      this.countProgress()
 
       if(this.isLastQuestion) {
         this.showResults()
@@ -123,7 +132,7 @@ export default {
       this.was_validated = false
     },
     onAnswer(answer) {
-      this.questions[this.current_index].answer = answer.value
+      this.currentQuestion.answer = answer.value
     },
     checkSubQuestionExisting() {
       return new Promise((resolve, reject) => {
@@ -147,13 +156,24 @@ export default {
     showResults() {
       this.show_results = true
     },
-    progress() {
+    countProgress() {
       let answered = this.questions.filter(el => el.answer).length
-      return Math.round((answered*100)/this.totalQuestions)
+      this.progress = Math.round((answered*100)/this.totalQuestions)
     },
+    reset() {
+      this.questions = [...this.questionsProp].map(obj => {
+        return Object.assign(obj, {
+            answer: undefined,
+            is_disabled: false
+          });
+      })
+      this.current_index = 0
+      this.was_validated = false
+      this.countProgress()
+    }
   },
   mounted() {
-    this.questions = this.questionsProp
+    this.reset() 
   }
 }
 </script>
