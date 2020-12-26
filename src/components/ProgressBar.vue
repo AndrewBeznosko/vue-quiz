@@ -1,6 +1,17 @@
 <template>
-  <div class="progress" :style="`height: ${height};`">
-    <div class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" aria-valuenow="75" aria-valuemin="0" aria-valuemax="100" :style="`width: ${progress}%`"></div>
+  <div 
+    class="progress" 
+    :style="`height: ${height};`"
+  >
+    <div 
+      class="progress-bar" 
+      :class="mod"
+      role="progressbar" 
+      aria-valuemin="0" 
+      aria-valuemax="100" 
+      :aria-valuenow="progress" 
+      :style="`width: ${progress}%`"
+    ></div>
   </div>
 </template>
 
@@ -11,6 +22,9 @@ export default {
         progress: {
             type: Number,
             default: 0
+        },
+        mod: {
+            type: String
         },
         height: {
             type: String,

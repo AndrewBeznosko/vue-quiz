@@ -12,6 +12,7 @@
           
           <ProgressBar
             :progress="progress"
+            mod="progress-bar-striped progress-bar-animated bg-success"
             class="position-absolute w-100 start-0 bottom-0 rounded-0"
           />
 
